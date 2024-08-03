@@ -22,7 +22,27 @@ class GameState():
         self.board[move.endRow][move.endCol] = move.pieceMoved  #移動到的格子將會變成在piecemoved在棋盤數據上對應的棋子。例如你移動士兵，"wp""寫在對應的row&col上。
         self.moveLog.append(move) #如果要悔棋可以從這邊的紀錄開始，這裡的move是一個物件（包含了棋步進入class Move的各種資訊）
         self.whiteToMove = not self.whiteToMove #swap players
-       
+
+    def getValidMoves(self):
+        return  self.getAllPossibleMoves()
+    
+    def getAllPossibleMoves(self):
+        moves = [Move((6, 4), (4, 4), self.board)]
+        for r in range(len(self.board)):            #表示list內涵多少個1維list
+            for c in range(len(self.board[r])):     #表示1維list中內涵多少elements
+                turn = self.board[r][c][0]          #表示每一個元素中第一個資料（也就是說 w or b )
+                if (turn == 'w' and self.whiteToMove) and (turn == "b" and not  self.whiteToMove) : #兩種可能，是白色棋子＆白色的回合 和 黑色棋子＆黑色的回合 ，如果是白棋回合就只會針對白棋子運算；黑棋也是。
+                    piece = self.board[r][c][1] 
+                    if piece == "p":
+                        self.getPawnMoves(r, c, moves )
+                    elif piece == "R":
+                        self.getRookMoves(r, c, moves )
+        return moves
+    
+    def getPawnMoves(r, c, moves ):
+        pass
+    def getRookMoves(r, c, moves ):
+        pass
 #以下的方法是悔棋至上一步。
     def undoMove(self):
         if len(self.moveLog) != 0 :
@@ -51,6 +71,16 @@ class Move():
         self.pieceMoved = board[self.startRow][self.startCol] #開始的行列將對應到棋盤的格子aka棋子或者是空格 （例如說一開始選擇(1, 1))
         print(self.startRow,self.startCol)
         self.pieceCaptured = board[self.endRow][self.endCol] #結束的行列將對應到棋盤的格子  aka棋子或者是空格  ((例如說移動到(3, 3))
+        self.moveID = self.startRow * 1000 + self.startCol * 100 + self.endRow * 10 + self.endCol 
+        print(self.moveID)
+
+    
+    #overriding覆寫
+    
+    def __eq__(self, other):
+        if isinstance (other,Move):
+            return self.moveID  == other.moveID
+        return False
     
     def getChessNotaiton(self):
         return self.getRankFile(self.startRow , self.startCol) + self.getRankFile(self.endRow , self.endCol)

@@ -35,6 +35,8 @@ def main():
     clock = p.time.Clock() #追蹤時間的物件。
     screen.fill(p.Color("white")) 
     gs = ChessEngine.GameState()
+    validMoves = gs.getValidMoves()
+    moveMade = False  #flag變數，當棋子移動時會使用。
     loadImages() #這只做一次，所以要寫在迴圈之外。
     running = True
     sqSelected = () #目前沒有任何方塊被選取。用來追蹤目前玩家選取的方塊是哪一個。（tuple:(6, 4)）
@@ -60,17 +62,25 @@ def main():
                 if len (playerClicks) == 2 : #如果點擊紀錄等於兩次（用資料長度計算），就移動。
                     move = ChessEngine.Move(playerClicks[0],playerClicks[1], gs.board) #move = Move方法
                     print(move.getChessNotaiton())
-                    gs.makeMove(move)  # 把點選的內容輸入進makeMove()，讓他移動。
+                    if move in validMoves : # 如果move在validMove列表裡 ＝ 是合法棋步的話
+                        gs.makeMove(move)  # 把點選的內容輸入進makeMove()，讓他移動。 
+                        moveMade == True  
+
                     sqSelected = () #移動結束把點擊紀錄清空
                     playerClicks = [] #同上
             #悔棋
             elif e.type == p.KEYDOWN:
-                if e.key == p.K_z:
+                if e.key == p.K_z:  
                     gs.undoMove()
-                     
-            drawGameState(screen,gs) #根據現在的棋盤進度畫出棋盤。
-            clock.tick(max_fps) #控制每一幀更新的速度（也就是遊戲中更新循環的速度），避免不同電腦性能不同造成遊戲速度不同。
-            p.display.flip() #update the content of entire display. 
+                    moveMade == True
+
+        if moveMade:
+            validMoves = gs.getValidMoves()
+            moveMade == False 
+
+        drawGameState(screen,gs) #根據現在的棋盤進度畫出棋盤。
+        clock.tick(max_fps) #控制每一幀更新的速度（也就是遊戲中更新循環的速度），避免不同電腦性能不同造成遊戲速度不同。
+        p.display.flip() #update the content of entire display. 
 
 
 # Down in responsible for all graphics within current game state.
