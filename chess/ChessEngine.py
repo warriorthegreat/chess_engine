@@ -8,7 +8,7 @@ class GameState():
         self.board = [ 
             ["bR", "bN", "bB", "bQ", "bK", "bB", "bN", "bR"],
             ["bp", "bp", "bp", "bp", "bp", "bp", "bp", "bp"],
-            ["--", "--", "--", "--", "--", "--", "--", "--"],
+            ["--", "--", "--", "--", "--", "wp", "--", "--"],
             ["--", "--", "--", "--", "--", "--", "--", "--"],
             ["--", "--", "--", "--", "--", "--", "--", "--"],
             ["--", "--", "--", "--", "--", "--", "--", "--"],
@@ -16,6 +16,8 @@ class GameState():
             ["wR", "wN", "wB", "wQ", "wK", "wB", "wN", "wR"]]
         self.whiteToMove = True
         self.moveLog = [] #用來記錄目前動到哪邊，同時也保證一些動棋子的權益正常（例如說，一次只能移動一個棋子）
+        self.moveFunctions = {"p": self.getPawnMoves, "R": self.getRookMoves, "N": self.getKnightMoves, 
+                              "B": self.getBishopMoves, "Q": self.getQueenMoves, "K": self.getKingMoves,  }
 
     def makeMove(self, move):           #使棋子圖片移動的方法，裡面的方法透過繼承得到。(不過這個方法不適用於入堡、、士兵升變、吃過路兵的情況。)
         self.board[move.startRow][move.startCol] = "--"  #因為棋子移動了，所以原本的格子變成空格。
@@ -31,17 +33,55 @@ class GameState():
         for r in range(len(self.board)):            #表示list內涵多少個1維list
             for c in range(len(self.board[r])):     #表示1維list中內涵多少elements
                 turn = self.board[r][c][0]          #表示每一個元素中第一個資料（也就是說 w or b )
-                if (turn == 'w' and self.whiteToMove) and (turn == "b" and not  self.whiteToMove) : #兩種可能，是白色棋子＆白色的回合 和 黑色棋子＆黑色的回合 ，如果是白棋回合就只會針對白棋子運算；黑棋也是。
+                if (turn == 'w' and self.whiteToMove) or (turn == "b" and not  self.whiteToMove) : #兩種可能，是白色棋子＆白色的回合 和 黑色棋子＆黑色的回合 ，如果是白棋回合就只會針對白棋子運算；黑棋也是。
                     piece = self.board[r][c][1] 
-                    if piece == "p":
-                        self.getPawnMoves(r, c, moves )
-                    elif piece == "R":
-                        self.getRookMoves(r, c, moves )
+                    self.moveFunctions[piece](r, c, moves) #呼叫讓棋子移動的方程式
         return moves
     
-    def getPawnMoves(r, c, moves ):
+    def getPawnMoves(self, r, c, moves ):
+        if self.whiteToMove : # 如果是白色的回合
+            if self.board[r-1][c] == "--": #檢查如果白色的士兵前面都是空的
+                moves.append(Move((r, c), (r-1, c), self.board)) # 就用Move class 進行移動
+                if r == 6 and self.board[r-2][c] == "--": #如果row 6的士兵前面都是空的（檢查可以移動兩格的部分）
+                    moves.append(Move((r, c), (r-2, c), self.board)) # 就用Move class 進行移動
+            if c-1 >= 0 : #如果要往左邊吃棋子
+                if self.board[r-1][c-1][0] == "b" : #如果左前方是黑棋的話
+                    moves.append(Move((r, c), (r-1, c-1), self.board)) # 就用Move class 進行移動
+            if c+1 <= 7 : #如果要往右邊吃棋子
+                if self.board[r-1][c+1][0] == "b" : #如果左前方是黑棋的話
+                    moves.append(Move((r, c), (r-1, c+1), self.board)) # 就用Move class 進行移動
+        else : #如果是黑色的回合
+            if self.board[r+1][c] == "--":
+                moves.append(Move((r, c), (r+1, c), self.board))
+                if r == 1 and self.board[r+ 1][c] == "--":
+                    moves.append(Move((r, c), (r+2, c), self.board))
+            if c-1 >= 0 : #向左前方吃子
+                if self.board[r+1][c-1][0] == "w":
+                    moves.append(Move((r, c), (r+1, c-1), self.board))
+            if c+1 <= 7 : #向右前方吃子
+                if self.board[r+1][c+1][0] == "w":
+                    moves.append(Move((r, c), (r+1, c+1), self.board))
+
+            #之後改進
+
+
+
+
+#如果要往右邊吃棋子
+
+
+
+    def getRookMoves(self, r, c, moves ):
         pass
-    def getRookMoves(r, c, moves ):
+    def getKnightMoves(self, r, c, moves ):
+        pass
+    def getBishopMoves(self, r, c, moves ):
+        pass
+    def getQueenMoves(self, r, c, moves ):
+        pass
+    def getKingMoves(self, r, c, moves ):
+        pass
+    def getRookMoves(self, r, c, moves ):
         pass
 #以下的方法是悔棋至上一步。
     def undoMove(self):
@@ -78,8 +118,8 @@ class Move():
     #overriding覆寫
     
     def __eq__(self, other):
-        if isinstance (other,Move):
-            return self.moveID  == other.moveID
+        if isinstance (other,Move):  # 另一個move是不是move物件
+            return self.moveID  ==  other.moveID #如果是的話就回傳
         return False
     
     def getChessNotaiton(self):
